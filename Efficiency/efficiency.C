@@ -50,15 +50,16 @@ void efficiency()
 
 	// Output the efficiency results and their errors for each detector.
     for (int id : {8,9,10,11,12,13}) {
-    int n = counts[id];
-    double efficiency = N > 0 ? (n / N) * 100 : 0; // Calculate efficiency as a percentage.
-    double error = N > 0 ? (1 / sqrt(N)) * sqrt(n / N * (1 - n / N)) * 100 : 0; // Calculate error as a percentage.
+        int n = counts[id];
+        double efficiency = N > 0 ? (n / N) * 100 : 0; // Calculate efficiency as a percentage.
+        double error = N > 0 ? (1 / sqrt(N)) * sqrt(n / N * (1 - n / N)) * 100 : 0; // Calculate error as a percentage.
 
-    // Print counts as integers without decimal places
-    std::cout << "Detector " << id << "\t" << "Counts " << n << "\t"; // Display count as an integer
+        // Print counts as integers without decimal places
+        std::cout << "Detector " << id << "\t" << "Counts " << n << "\t"; // Display count as an integer
 
-    // Set fixed point and two decimal places for efficiencies and errors
-    std::cout << std::fixed << std::setprecision(2) 
-            << "Efficiencies " << efficiency << "%\t" << "Error " << error << "%" << std::endl;
-}
+        // Set fixed point and two decimal places for efficiencies and errors
+        std::cout << std::fixed << std::setprecision(2) 
+                << "Err Counts " << sqrt(n) << "\t" << "Efficiencies " << efficiency << "%\t" << "Error Eff " << error << "%" << std::endl;
+    }
+
 }
