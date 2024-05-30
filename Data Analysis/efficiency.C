@@ -5,7 +5,7 @@
 
 // Main function to compute the efficiency of detectors, particularly focusing on detector 13.
 void efficiency()
-{
+{	
 	// Open the ROOT file containing the tree.
     TFile *file = TFile::Open("run6578.root");
     if (!file || file->IsZombie()) { // Check if the file is opened successfully.
@@ -24,9 +24,6 @@ void efficiency()
 	// Create a data frame from the TTree for easier processing.
     ROOT::RDataFrame df(*tree);
 
-    // Create a histogram to store the counts of detector 13 in each event
-    TH1F *hCounts13 = new TH1F("hCounts13", "Counts of Detector 13 per Event;Number of times 13 appears;Number of Events", 10, 0, 10);
-
 	// Lambda function to check if detector with id 13 is activated in the event.
     auto hasDetector13 = [](const std::vector<unsigned int>& ids) {
         return std::find(ids.begin(), ids.end(), 13) != ids.end();
@@ -39,7 +36,7 @@ void efficiency()
     std::unordered_map<int, int> counts;
 
 	// Process each entry in the filtered data frame.
-    filtered.Foreach([&](const std::vector<unsigned int>& ids) {
+    filtered.Foreach([&](const vector<vector<short>& ids) {
         std::unordered_set<int> unique_ids(ids.begin(), ids.end()); // Use a set to avoid counting duplicates.
         for (int id : {8,9,10,11,12,13}) {
             if (unique_ids.count(id)) {
@@ -65,5 +62,4 @@ void efficiency()
                 << "Err Counts " << sqrt(n) << "\t" << "Efficiencies " << efficiency << "%\t" << "Error Eff " << error << "%" << std::endl;
     }
 
-    
 }
