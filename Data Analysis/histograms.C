@@ -32,13 +32,22 @@ void histograms()
 
     // Create a histogram to store the counts of detector 13 in each event
     TH1I *hCounts13 = new TH1I("hCounts13", "Counts of Detector 13 per Event;Number of hits;Number of Events", 10, 0, 10);
-
+    TH1F *hMaxSum = new TH1F("hMaxSum13", "Sum of Maximum Charges for Detector 13;Charge;Number of Events", 200, 0, 2000);
+    
+    std::vector<int> ids = {8,9,10,11,12,13};
+    
     // Map to store a histogram for each detector ID
     std::map<int, TH1F*> histogramsQ;
-    std::vector<int> ids = {8,9,10,11,12,13};
+    std::map<int, TH1F*> histogramsTQ;
 
     for (int id : ids) {
-        histogramsQ[id] = new TH1F(Form("hMaxQ_%d", id), Form("Maximum Charge of Detector %d;Charge (ADC);Number of Events", id), 200, 0, 2000);
+        histogramsQ[id] = new TH1F(Form("hMaxQ_%d", id),
+                                   Form("Maximum Charge of Detector %d;Charge (ADC);Number of Events", id),
+                                   200, 0, 2000);
+
+        histogramsTQ[id] = new TH1F(Form("hSumMaxCharge_%d", id), 
+                                    Form("Sum of Maximum Charges for Detector %d;Charge;Number of Events", id), 
+                                    200, 0, 2000);
     }
 
 
@@ -81,6 +90,7 @@ void histograms()
         }   
     }, {"apv_id", "apv_q"});
 
+
     // Draw and save each histogram
     for (int id : ids) {
         TCanvas *canvas = new TCanvas(Form("canvas_%d", id), Form("Histogram of Maximum Charge for Detector %d", id), 800, 600);
@@ -88,31 +98,28 @@ void histograms()
         canvas->SaveAs(Form("Figures/maxQ_detector_%d.png", id));
     }
 
-
-
     /****************/
     /** Charge Sum **/
     /****************/
 
     // Process the filtered data
-    // filtered.Define("maxSum", [&](const std::vector<std::vector<short>>& ipv_q, const std::vector<unsigned int>& ids) {
-    //     int sumMax = 0;
-    //     // Check for detector 13 in ids
-    //     if (std::find(ids.begin(), ids.end(), 13) != ids.end()) {
-    //         // Iterate over each vector in ipv_q
-    //         for (const auto& vec : ipv_q) {
-    //             if (!vec.empty()) {
-    //                 sumMax += *max_element(vec.begin(), vec.end()); // Find max and add to sum
-    //             }
-    //         }
-    //     }
-    //     return sumMax;
-    // }, {"ipv_q", "apv_id"})
-    //   .Filter([](int sumMax) { return sumMax > 0; }, {"maxSum"}) // Filter to keep only non-zero sums
-    //   .Foreach([&](int sumMax) {
-    //     hMaxSum->Fill(sumMax); // Fill histogram
-    // }, {"maxSum"});
+    df.Foreach([&](const std::vector<unsigned int>& apv_id, const std::vector<std::vector<short>>& apv_q) {
+        int sumMax = 0;
+        for (size_t i = 0; i < apv_id.size(); ++i) {
+            if (apv_id[i] == 13) {  // Check for detector 13 at index i
+                if (i < apv_q.size() && !apv_q[i].empty()) {  // Ensure index is valid and vector is not empty
+                    sumMax += *max_element(apv_q[i].begin(), apv_q[i].end()); // Find max and add to sum
+                }
+            }
+        }
 
-    //cout << filtered.Describe();
+        if (sumMax > 0) {  // Only fill the histogram if the sum is greater than zero
+            hMaxSum->Fill(sumMax);
+        }
+    }, {"apv_id", "apv_q"});
+
+    TCanvas *canvas2 = new TCanvas("canvas_13", "Histogram of Maximum Charge for Detector 13", 800, 600);
+    hMaxSum->Draw();
+    canvas2->SaveAs("Figures/maxQ_detector_13Proof.png");
 }
 
