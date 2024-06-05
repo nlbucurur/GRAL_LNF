@@ -9,7 +9,7 @@
 
 using namespace std;
 
-// Main function to compute the efficiency of detectors, particularly focusing on detector 13.
+
 void histograms()
 {
 	// Open the ROOT file containing the tree.
@@ -121,15 +121,15 @@ void histograms()
     
     // Draw and save each histogram
     for (int id : ids) {
-        TCanvas *canvas0 = new TCanvas(Form("canvas_%d", id), Form("Hits in Detector %d", id), 800, 600);
+        TCanvas *canvas0 = new TCanvas(Form("canvas_%d", id), Form("Hits in Detector %d", id), 900, 600);
         histogramsHits[id]->Draw();
         canvas0->SaveAs(Form("Figures/hits_detector_%d.png", id)); 
 
-        TCanvas *canvas1 = new TCanvas(Form("canvas_%d", id), Form("Histogram of Maximum Charge for Detector %d", id), 800, 600);
+        TCanvas *canvas1 = new TCanvas(Form("canvas_%d", id), Form("Histogram of Maximum Charge for Detector %d", id), 900, 600);
         histogramsQ[id]->Draw();
         canvas1->SaveAs(Form("Figures/maxQ_detector_%d.png", id));
 
-        TCanvas *canvas2 = new TCanvas(Form("canvas_%d", id), Form("Histogram of Sum of Maximum Charges for Detector %d", id), 800, 600);
+        TCanvas *canvas2 = new TCanvas(Form("canvas_%d", id), Form("Histogram of Sum of Maximum Charges for Detector %d", id), 900, 600);
         histogramsTQ[id]->Draw();
         canvas2->SaveAs(Form("Figures/TotalQ_detector_%d.png", id));
     }
