@@ -2,12 +2,17 @@
 #include <unordered_set>
 #include <ROOT/RDataFrame.hxx> // For modern data frame tool
 #include <cmath>              // Include for sqrt function
+#include <TH1F.h>
+#include <TCanvas.h>
+#include <string>
+#include <map>
 
-// Main function to compute the efficiency of detectors, particularly focusing on detector 13.
-void efficiency()
-{	
+//Compute the efficiency
+std::multimap<int, std::pair<double, double>> eff(const std::string& path)
+{
+    
 	// Open the ROOT file containing the tree.
-    TFile *file = TFile::Open("run6578.root");
+    TFile *file = TFile::Open(path.c_str());
     if (!file || file->IsZombie()) { // Check if the file is opened successfully.
         std::cerr << "Error opening file or file not found." << std::endl;
         return;
@@ -32,11 +37,12 @@ void efficiency()
 	// Filter the data frame to include only those events where detector 13 is activated.
     auto filtered = df.Filter(hasDetector13, {"apv_id"});
 
+
 	// Map to store counts of activations for each detector.
     std::unordered_map<int, int> counts;
 
 	// Process each entry in the filtered data frame.
-    filtered.Foreach([&](const vector<vector<short>& ids) {
+    filtered.Foreach([&](const std::vector<std::vector<short>>& ids) {
         std::unordered_set<int> unique_ids(ids.begin(), ids.end()); // Use a set to avoid counting duplicates.
         for (int id : {8,9,10,11,12,13}) {
             if (unique_ids.count(id)) {
@@ -48,18 +54,42 @@ void efficiency()
 	// Get the number of entries where detector 13 was hit to calculate efficiencies.
     double n = filtered.Count().GetValue();
 
+    std::multimap<int, pair<double, double>> effmap;
+
+
 	// Output the efficiency results and their errors for each detector.
     for (int id : {8,9,10,11,12,13}) {
         int n = counts[id];
         double efficiency = N > 0 ? (n / N) * 100 : 0; // Calculate efficiency as a percentage.
-        double error = N > 0 ? (1 / sqrt(N)) * sqrt(n / N * (1 - n / N)) * 100 : 0; // Calculate error as a percentage.
-
+        double error = N > 0 ? (1 / sqrt(N)) * sqrt(n / N * (1 - n / N)) * 100 : 0; // Calculate error as a percentage. 
+        effmap.insert{std::make_pair(id, std::make_pair(efficiency, error))};
+        
         // Print counts as integers without decimal places
-        std::cout << "Detector " << id << "\t" << "Counts " << n << "\t"; // Display count as an integer
+        //std::cout << "Detector " << id << "\t" << "Counts " << n << "\t"; // Display count as an integer
 
         // Set fixed point and two decimal places for efficiencies and errors
-        std::cout << std::fixed << std::setprecision(2) 
-                << "Err Counts " << sqrt(n) << "\t" << "Efficiencies " << efficiency << "%\t" << "Error Eff " << error << "%" << std::endl;
+        //std::cout << std::fixed << std::setprecision(2) 
+        //        << "Err Counts " << sqrt(n) << "\t" << "Efficiencies " << efficiency << "%\t" << "Error Eff " << error << "%" << std::endl;
     }
 
+    return effmap;
+}
+
+// Main function to compute the efficiency of detectors, particularly focusing on detector 13.
+void efficiency()
+{
+    vector<string> rootfiles = {"6578","6583","6586","6592","6596","6599"};
+    
+    partial = eff("Data/run6578.root");
+
+    //for(const auto& key : partial){
+
+    //    std::cout << "Detector: " << key.first << ", Efficiency: " << key.second << endl; 
+    //}
+
+    // for (auto file: rootfiles)
+    // {
+    //     eff(file);
+    // }
+    
 }
