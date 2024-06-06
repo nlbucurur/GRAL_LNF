@@ -31,26 +31,31 @@ void histograms()
     ROOT::RDataFrame df(*tree);
 
     vector<int> ids = {8,9,10,11,12,13};
+
+    map<int, string> idToName = {{8, "2"}, {9, "3"}, {10, "4"}, {11, "5"}, {12, "6"}, {13, "7"}};
     
     // Map to store a histogram for each detector ID
     map<int, TH1F*> histogramsQ;
     map<int, TH1F*> histogramsTQ;
     map<int, TH1I*> histogramsHits;
 
-    for (int id : ids) {
-        histogramsHits[id] = new TH1I(Form("hCounts_%d", id),
-                                      Form("Counts of Detector %d per Event;Number of hits;Number of Events", id),
-                                      10, 0, 10);
 
-        histogramsQ[id] = new TH1F(Form("hMaxQ_%d", id),
-                                   Form("Maximum Charge of Detector %d;Charge (ADC);Number of Events", id),
+    
+    for (int id : ids) {
+        string name = idToName[id];
+        
+        histogramsHits[id] = new TH1I(Form("hCounts_%s", name.c_str()),
+                                      Form("Counts of Detector in plane %s per Event; Number of hits; Number of Events", name.c_str()),
+                                      121, 0, 121);
+
+        histogramsQ[id] = new TH1F(Form("hMaxQ_%s", name.c_str()),
+                                   Form("Maximum Charge of Detector %s;Charge (ADC);Number of Events", name.c_str()),
                                    200, 0, 2000);
 
-        histogramsTQ[id] = new TH1F(Form("hSumMaxCharge_%d", id), 
-                                    Form("Sum of Maximum Charges for Detector %d;Charge;Number of Events", id), 
+        histogramsTQ[id] = new TH1F(Form("hSumMaxCharge_%s", name.c_str()), 
+                                    Form("Sum of Maximum Charges for Detector %s;Charge;Number of Events", name.c_str()), 
                                     200, 0, 2000);
     }
-
 
 
 	// Lambda function to check if detector with id 13 is activated in the event.
@@ -121,16 +126,23 @@ void histograms()
     
     // Draw and save each histogram
     for (int id : ids) {
-        TCanvas *canvas0 = new TCanvas(Form("canvas_%d", id), Form("Hits in Detector %d", id), 900, 600);
+        string name = idToName[id];
+        
+        TCanvas *canvas0 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Hits in Detector in plane %s", name.c_str()), 900, 600);
+        canvas0->SetLogy();
+        
         histogramsHits[id]->Draw();
-        canvas0->SaveAs(Form("Figures/hits_detector_%d.png", id)); 
+        canvas0->SaveAs(Form("Figures/hits_detector_plane_%s.png", name.c_str()));
+        Int_t bin_under = histogramsHits[id]->GetBinContent(0); 
+        Int_t bin_over = histogramsHits[id]->GetBinContent(11);
+        cout << bin_under << "\t" << bin_over << endl;
 
-        TCanvas *canvas1 = new TCanvas(Form("canvas_%d", id), Form("Histogram of Maximum Charge for Detector %d", id), 900, 600);
+        TCanvas *canvas1 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Histogram of Maximum Charge for Detector in plane %s", name.c_str()), 900, 600);
         histogramsQ[id]->Draw();
-        canvas1->SaveAs(Form("Figures/maxQ_detector_%d.png", id));
+        canvas1->SaveAs(Form("Figures/maxQ_detector_plane_%s.png", name.c_str()));
 
-        TCanvas *canvas2 = new TCanvas(Form("canvas_%d", id), Form("Histogram of Sum of Maximum Charges for Detector %d", id), 900, 600);
+        TCanvas *canvas2 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Histogram of Sum of Maximum Charges for Detector in plane %s", name.c_str()), 900, 600);
         histogramsTQ[id]->Draw();
-        canvas2->SaveAs(Form("Figures/TotalQ_detector_%d.png", id));
+        canvas2->SaveAs(Form("Figures/TotalQ_detector_plane_%s.png", name.c_str()));
     }
 }
