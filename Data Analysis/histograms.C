@@ -13,7 +13,7 @@ using namespace std;
 void histograms()
 {
 	// Open the ROOT file containing the tree.
-    TFile *file = TFile::Open("Data/run6578.root");
+    TFile *file = TFile::Open("Data/run6599.root");
     if (!file || file->IsZombie()) { // Check if the file is opened successfully.
         cerr << "Error opening file or file not found." << endl;
         return;
@@ -54,7 +54,7 @@ void histograms()
 
         histogramsTQ[id] = new TH1F(Form("hSumMaxCharge_%s", name.c_str()), 
                                     Form("Sum of Maximum Charges for Detector %s;Charge;Number of Events", name.c_str()), 
-                                    200, 0, 2000);
+                                    200, 0, 4000);
     }
 
 
@@ -123,26 +123,29 @@ void histograms()
     }, {"apv_id", "apv_q"});
 
     
+    TCanvas *canvas0 = new TCanvas("", "", 900, 600);
+    //canvas0->SetLogy();
     
     // Draw and save each histogram
     for (int id : ids) {
-        string name = idToName[id];
+        //string name = idToName[id];
         
-        TCanvas *canvas0 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Hits in Detector in plane %s", name.c_str()), 900, 600);
-        canvas0->SetLogy();
+        //TCanvas *canvas0 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Hits in Detector in plane %s", name.c_str()), 900, 600);
+        //canvas0->SetLogy();
         
         histogramsHits[id]->Draw();
-        canvas0->SaveAs(Form("Figures/hits_detector_plane_%s.png", name.c_str()));
-        Int_t bin_under = histogramsHits[id]->GetBinContent(0); 
-        Int_t bin_over = histogramsHits[id]->GetBinContent(11);
-        cout << bin_under << "\t" << bin_over << endl;
+        // //canvas0->SaveAs(Form("Figures/hits_detector_plane_%s.png", name.c_str()));
+        // Int_t bin_under = histogramsHits[id]->GetBinContent(0); 
+        // Int_t bin_over = histogramsHits[id]->GetBinContent(11);
+        // cout << bin_under << "\t" << bin_over << endl;
 
-        TCanvas *canvas1 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Histogram of Maximum Charge for Detector in plane %s", name.c_str()), 900, 600);
-        histogramsQ[id]->Draw();
-        canvas1->SaveAs(Form("Figures/maxQ_detector_plane_%s.png", name.c_str()));
+        // // TCanvas *canvas1 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Histogram of Maximum Charge for Detector in plane %s", name.c_str()), 900, 600);
+        //histogramsQ[id]->Draw("same");
+        // // canvas1->SaveAs(Form("Figures/maxQ_detector_plane_%s.png", name.c_str()));
 
-        TCanvas *canvas2 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Histogram of Sum of Maximum Charges for Detector in plane %s", name.c_str()), 900, 600);
-        histogramsTQ[id]->Draw();
-        canvas2->SaveAs(Form("Figures/TotalQ_detector_plane_%s.png", name.c_str()));
+        // // TCanvas *canvas2 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Histogram of Sum of Maximum Charges for Detector in plane %s", name.c_str()), 900, 600);
+        // histogramsTQ[id]->Draw("same");
+        // // canvas2->SaveAs(Form("Figures/TotalQ_detector_plane_%s.png", name.c_str()));
     }
+    canvas0->Draw();
 }

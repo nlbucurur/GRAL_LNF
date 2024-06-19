@@ -1,95 +1,89 @@
 #include <iostream>
+#include <vector>
+#include <unordered_map>
 #include <unordered_set>
-#include <ROOT/RDataFrame.hxx> // For modern data frame tool
-#include <cmath>              // Include for sqrt function
-#include <TH1F.h>
+#include <cmath>
+#include <ROOT/RDataFrame.hxx>
+#include <TFile.h>
+#include <TGraphErrors.h>
 #include <TCanvas.h>
-#include <string>
-#include <map>
 
-//Compute the efficiency
-std::multimap<int, std::pair<double, double>> eff(const std::string& path)
-{
-    
-	// Open the ROOT file containing the tree.
-    TFile *file = TFile::Open(path.c_str());
-    if (!file || file->IsZombie()) { // Check if the file is opened successfully.
-        std::cerr << "Error opening file or file not found." << std::endl;
-        return;
+using namespace std;
+
+// Function to compute efficiencies for a given run
+unordered_map<int, pair<double, double>> computeEfficiency(const string& filename) {
+    TFile *file = TFile::Open(filename.c_str());
+    if (!file || file->IsZombie()) {
+        cerr << "Error opening file: " << filename << endl;
+        return {};
     }
 
-	// Retrieve the tree named "raw" from the file.
     TTree *tree = (TTree*)file->Get("raw");
-    if (!tree) { // Check if the tree exists.
-        std::cerr << "Tree 'raw' not found in file." << std::endl;
-        file->Close(); // Close the file if the tree is not found.
-        return; // Exit the function.
+    if (!tree) {
+        cerr << "Tree 'raw' not found in file: " << filename << endl;
+        file->Close();
+        return {};
     }
 
-	// Create a data frame from the TTree for easier processing.
     ROOT::RDataFrame df(*tree);
-
-	// Lambda function to check if detector with id 13 is activated in the event.
-    auto hasDetector13 = [](const std::vector<unsigned int>& ids) {
-        return std::find(ids.begin(), ids.end(), 13) != ids.end();
+    auto hasDetector13 = [](const vector<unsigned int>& ids) {
+        return find(ids.begin(), ids.end(), 13) != ids.end();
     };
-
-	// Filter the data frame to include only those events where detector 13 is activated.
     auto filtered = df.Filter(hasDetector13, {"apv_id"});
 
-
-	// Map to store counts of activations for each detector.
-    std::unordered_map<int, int> counts;
-
-	// Process each entry in the filtered data frame.
-    filtered.Foreach([&](const std::vector<std::vector<short>>& ids) {
-        std::unordered_set<int> unique_ids(ids.begin(), ids.end()); // Use a set to avoid counting duplicates.
+    unordered_map<int, int> counts;
+    filtered.Foreach([&](const vector<unsigned int>& ids) {
+        unordered_set<int> unique_ids(ids.begin(), ids.end());
         for (int id : {8,9,10,11,12,13}) {
-            if (unique_ids.count(id)) {
-                counts[id]++; // Increment count for each detector found.
-            }
+            if (unique_ids.count(id)) counts[id]++;
         }
     }, {"apv_id"});
 
-	// Get the number of entries where detector 13 was hit to calculate efficiencies.
-    double n = filtered.Count().GetValue();
+    double N = filtered.Count().GetValue();
+    unordered_map<int, pair<double, double>> efficiencies;
 
-    std::multimap<int, pair<double, double>> effmap;
-
-
-	// Output the efficiency results and their errors for each detector.
     for (int id : {8,9,10,11,12,13}) {
-        int n = counts[id];
-        double efficiency = N > 0 ? (n / N) * 100 : 0; // Calculate efficiency as a percentage.
-        double error = N > 0 ? (1 / sqrt(N)) * sqrt(n / N * (1 - n / N)) * 100 : 0; // Calculate error as a percentage. 
-        effmap.insert{std::make_pair(id, std::make_pair(efficiency, error))};
-        
-        // Print counts as integers without decimal places
-        //std::cout << "Detector " << id << "\t" << "Counts " << n << "\t"; // Display count as an integer
-
-        // Set fixed point and two decimal places for efficiencies and errors
-        //std::cout << std::fixed << std::setprecision(2) 
-        //        << "Err Counts " << sqrt(n) << "\t" << "Efficiencies " << efficiency << "%\t" << "Error Eff " << error << "%" << std::endl;
+        double n = counts[id];
+        double efficiency = N > 0 ? (n / N) * 100 : 0;
+        double error = N > 0 ? (1 / sqrt(N)) * sqrt(n / N * (1 - n / N)) * 100 : 0;
+        efficiencies[id] = make_pair(efficiency, error);
     }
 
-    return effmap;
+    file->Close();
+    return efficiencies;
 }
 
-// Main function to compute the efficiency of detectors, particularly focusing on detector 13.
-void efficiency()
-{
-    vector<string> rootfiles = {"6578","6583","6586","6592","6596","6599"};
+// Main function to process multiple runs
+int efficiency() {
+    vector<string> files = {"Data/run6578.root", "Data/run6583.root", "Data/run6586.root", "Data/run6592.root", "Data/run6596.root", "Data/run6599.root"};
+    vector<int> hvs = {500, 520, 520, 540, 560, 580}; // HV for detectors 8-12, detector 13 always at 600
     
-    partial = eff("Data/run6578.root");
+    // Store efficiency data
+    unordered_map<int, vector<pair<double, double>>> data; // ID -> List of (efficiency, error)
+    vector<double> hv_levels = {500, 520, 520, 540, 560, 580};  // HV levels without 600 since it's constant for ID 13
 
-    //for(const auto& key : partial){
+    for (size_t i = 0; i < files.size(); ++i) {
+        auto eff = computeEfficiency(files[i]);
+        for (int id : {8,9,10,11,12}) {
+            data[id].push_back(eff[id]);
+        }
+        // Handle detector 13 separately if needed
+    }
 
-    //    std::cout << "Detector: " << key.first << ", Efficiency: " << key.second << endl; 
-    //}
+    // Create graphs for each detector
+    for (int id : {8,9,10,11,12}) {
+        vector<double> effs, errs;
+        for (auto& e : data[id]) {
+            effs.push_back(e.first);
+            errs.push_back(e.second);
+        }
 
-    // for (auto file: rootfiles)
-    // {
-    //     eff(file);
-    // }
-    
+        TGraphErrors *graph = new TGraphErrors(hv_levels.size(), hv_levels.data(), effs.data(), nullptr, errs.data());
+        graph->SetTitle(Form("Efficiency vs HV for Detector %d;HV;Efficiency (%)", id));
+        TCanvas *c = new TCanvas(Form("c%d", id), Form("Canvas for Detector %d", id), 600, 400);
+        graph->Draw("AP");
+        c->SaveAs(Form("Efficiency_HV_Detector%d.png", id));
+    }
+
+    return 0;
 }
