@@ -46,7 +46,7 @@ void histograms()
         
         histogramsHits[id] = new TH1I(Form("hCounts_%s", name.c_str()),
                                       Form("Counts of Detector in plane %s per Event; Number of hits; Number of Events", name.c_str()),
-                                      121, 0, 121);
+                                      10, 1, 10);
 
         histogramsQ[id] = new TH1F(Form("hMaxQ_%s", name.c_str()),
                                    Form("Maximum Charge of Detector %s;Charge (ADC);Number of Events", name.c_str()),
@@ -76,7 +76,7 @@ void histograms()
         map<int, int> hitsCount;
         for (int id : ids) {
             hitsCount[id] = count(apv_id.begin(), apv_id.end(), id);
-            histogramsHits[id]->Fill(hitsCount[id]);
+            if (hitsCount[id] != 0) {histogramsHits[id]->Fill(hitsCount[id]);}  
         }
     }, {"apv_id"});
 
@@ -123,18 +123,18 @@ void histograms()
     }, {"apv_id", "apv_q"});
 
     
-    TCanvas *canvas0 = new TCanvas("", "", 900, 600);
+    //TCanvas *canvas0 = new TCanvas("", "", 900, 600);
     //canvas0->SetLogy();
     
     // Draw and save each histogram
     for (int id : ids) {
-        //string name = idToName[id];
+        string name = idToName[id];
         
-        //TCanvas *canvas0 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Hits in Detector in plane %s", name.c_str()), 900, 600);
+        TCanvas *canvas0 = new TCanvas(Form("canvas_%s", name.c_str()), Form("Hits in Detector in plane %s", name.c_str()), 900, 600);
         //canvas0->SetLogy();
         
         histogramsHits[id]->Draw();
-        // //canvas0->SaveAs(Form("Figures/hits_detector_plane_%s.png", name.c_str()));
+        canvas0->SaveAs(Form("Figures/hits_detector_plane_%s.png", name.c_str()));
         // Int_t bin_under = histogramsHits[id]->GetBinContent(0); 
         // Int_t bin_over = histogramsHits[id]->GetBinContent(11);
         // cout << bin_under << "\t" << bin_over << endl;
@@ -147,5 +147,5 @@ void histograms()
         // histogramsTQ[id]->Draw("same");
         // // canvas2->SaveAs(Form("Figures/TotalQ_detector_plane_%s.png", name.c_str()));
     }
-    canvas0->Draw();
+    //canvas0->Draw();
 }
