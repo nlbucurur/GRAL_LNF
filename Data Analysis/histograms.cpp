@@ -49,7 +49,7 @@ void histograms()
         
         histogramsHits[id] = new TH1I(Form("hCounts_%s", name.c_str()),
                                       Form("Hits of Detector in plane %s per Event; Number of hits; Number of Events", name.c_str()),
-                                      10, 1, 10);
+                                      150, 0, 150);
 
         histogramsQ[id] = new TH1F(Form("hMaxQ_%s", name.c_str()),
                                    Form("Maximum Charge of Detector %s;Charge (ADC);Number of Events", name.c_str()),
@@ -143,6 +143,8 @@ void histograms()
 
         histogramsHits[id]->Draw(); // Draw the histogram
 
+        histogramsHits[id]->GetXaxis()->SetRangeUser(1, 10); // Set x-axis range
+
         // Move the statistics box
         gPad->Update(); // Update the pad to ensure the stats box is created
         TPaveStats *stats = (TPaveStats*)histogramsHits[id]->FindObject("stats");
@@ -163,13 +165,28 @@ void histograms()
     TCanvas *logCanvas = new TCanvas("logCanvas", "Log-Scale Histograms of Hits for Different Detectors", 1200, 800);
     logCanvas->SetLogy(); // Set the y-axis to log scale
 
+    // Set the font size for the entire canvas
+    gStyle->SetTitleSize(0.05, "xyz"); // Set title size for x, y, and z axes
+    gStyle->SetLabelSize(0.05, "xyz"); // Set label size for x, y, and z axes
+    gStyle->SetOptStat(0); // Hide statistics boxes for the overlaid histograms
+
     // Draw the overlaid histograms
     for (size_t i = 0; i < ids.size(); ++i) {
         int id = ids[i];
         string name = idToName[id];
 
         histogramsHits[id]->SetLineColor(colors[i]); // Set the color of the histogram
+        histogramsHits[id]->SetLineWidth(1 + i); // Set varying line width for distinction
         histogramsHits[id]->SetStats(0); // Hide the individual stats boxes for the overlaid histograms
+        histogramsHits[id]->GetXaxis()->SetRangeUser(1, 121); // Set x-axis range for log-scale plot
+
+        // Set the font size for the axes titles and labels
+        float sizelabel = 0.035;
+        histogramsHits[id]->GetXaxis()->SetTitleSize(sizelabel);
+        histogramsHits[id]->GetXaxis()->SetLabelSize(sizelabel);
+        histogramsHits[id]->GetYaxis()->SetTitleSize(sizelabel);
+        histogramsHits[id]->GetYaxis()->SetLabelSize(sizelabel);
+
         if (i == 0) {
             histogramsHits[id]->Draw(); // Draw the first histogram
         } else {
@@ -178,15 +195,16 @@ void histograms()
     }
 
     // Create a legend for the overlaid histograms
-    TLegend *legend = new TLegend(0.75, 0.75, 0.9, 0.9);
+    TLegend *legend = new TLegend(0.75, 0.7, 0.9, 0.9);
     for (size_t i = 0; i < ids.size(); ++i) {
-        int id = ids[i];
-        string name = idToName[id];
-        legend->AddEntry(histogramsHits[id], Form("Detector %s", name.c_str()), "l");
+        legend->AddEntry(histogramsHits[ids[i]], Form("Detector %s", idToName[ids[i]].c_str()), "l");
+        float sizelabel = 0.03;
+        legend->SetTextSize(sizelabel);
     }
     legend->Draw();
 
-    logCanvas->SaveAs("Figures/log_histograms_all_detectors.png"); // Save the log-scale canvas as an image file
+    logCanvas->SaveAs("Figures/logscale_histograms_all_detectors.png"); // Save the log-scale canvas as an image file
+
 
 
     // Clean up
