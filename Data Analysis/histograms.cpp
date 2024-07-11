@@ -9,6 +9,8 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <ROOT/TThreadExecutor.hxx> // Include for setting number of threads
+#include <TStyle.h>
+#include <TLegend.h>
 
 using namespace std;
 
@@ -19,7 +21,7 @@ void histograms()
     ROOT::EnableImplicitMT(8); // Replace 4 with the desired number of threads
 
     // Open the ROOT file containing the tree.
-    TFile *file = TFile::Open("Data/run6599.root");
+    TFile *file = TFile::Open("Data/run6578.root");
     if (!file || file->IsZombie()) { // Check if the file is opened successfully.
         cerr << "Error opening file or file not found." << endl;
         return;
@@ -52,7 +54,7 @@ void histograms()
                                       150, 0, 150);
 
         histogramsQ[id] = new TH1F(Form("hMaxQ_%s", name.c_str()),
-                                   Form("Maximum Charge of Detector %s;Charge (ADC);Number of Events", name.c_str()),
+                                   Form("Charge of Detector %s;Charge (ADC);Number of Events", name.c_str()),
                                    200, 0, 2000);
 
         histogramsTQ[id] = new TH1F(Form("hSumMaxCharge_%s", name.c_str()), 
@@ -119,9 +121,18 @@ void histograms()
         }
     }, {"apv_id", "apv_q"});
 
+
+    /****************/
+    /** Total Hits **/
+    /****************/
+
     // Create a canvas
-    TCanvas *canvas = new TCanvas("canvas", "Histograms of Hits for Different Detectors", 1200, 1200);
-    canvas->Divide(2, 3); // Divide the canvas into a 2x3 grid
+    TCanvas *canvasHits = new TCanvas("canvasHits", "Histograms of Hits for Different Detectors", 1200, 1200);
+    canvasHits->Divide(2, 3); // Divide the canvas into a 2x3 grid
+    
+    // Grid for both axes
+    canvasHits->SetGridx();
+    canvasHits->SetGridy();
 
     // Define colors for each histogram
     vector<int> colors = {kRed, kBlue, kGreen, kMagenta, kCyan, kOrange};
@@ -131,9 +142,9 @@ void histograms()
         int id = ids[i];
         string name = idToName[id];
         
-        canvas->cd(i + 1); // Move to the next pad
+        canvasHits->cd(i + 1); // Move to the next pad
         histogramsHits[id]->SetLineColor(colors[i]); // Set the color of the histogram
-
+        histogramsHits[id]->SetLineWidth(2); // Set varying line width for distinction
         // Set the font size for the axes titles and labels
         float sizelabel = 0.035;
         histogramsHits[id]->GetXaxis()->SetTitleSize(sizelabel);
@@ -142,33 +153,41 @@ void histograms()
         histogramsHits[id]->GetYaxis()->SetLabelSize(sizelabel);
 
         histogramsHits[id]->Draw(); // Draw the histogram
-
+        gPad->SetGrid(); // Add grid to the current pad
         histogramsHits[id]->GetXaxis()->SetRangeUser(1, 10); // Set x-axis range
 
         // Move the statistics box
         gPad->Update(); // Update the pad to ensure the stats box is created
-        TPaveStats *stats = (TPaveStats*)histogramsHits[id]->FindObject("stats");
-        if (stats) {
-            stats->SetX1NDC(0.7); // New X1 position
-            stats->SetX2NDC(0.9); // New X2 position
-            stats->SetY1NDC(0.7); // New Y1 position
-            stats->SetY2NDC(0.9); // New Y2 position
-            stats->Draw(); // Draw the stats box on the pad
+        TPaveStats *statsHits = (TPaveStats*)histogramsHits[id]->FindObject("stats");
+        if (statsHits) {
+            statsHits->SetX1NDC(0.7); // New X1 position
+            statsHits->SetX2NDC(0.9); // New X2 position
+            statsHits->SetY1NDC(0.7); // New Y1 position
+            statsHits->SetY2NDC(0.9); // New Y2 position
+            statsHits->Draw(); // Draw the stats box on the pad
         }
         
     }
 
-    canvas->SaveAs("Figures/histograms_all_detectors.png"); // Save the canvas as an image file
+    canvasHits->SetGrid(); // Enable grid
+    canvasHits->SaveAs("Figures/histograms_all_detectors.png"); // Save the canvas as an image file
 
+
+    /********************/
+    /** Total Hits Log **/
+    /********************/
 
     // Create a canvas for the overlaid histograms in log scale
-    TCanvas *logCanvas = new TCanvas("logCanvas", "Log-Scale Histograms of Hits for Different Detectors", 1200, 800);
-    logCanvas->SetLogy(); // Set the y-axis to log scale
+    TCanvas *logcanvasHits = new TCanvas("logcanvasHits", "Log-Scale Histograms of Hits for Different Detectors", 1200, 800);
+    logcanvasHits->SetTitle("Hits on detectors per event"); // Set title for log-scale canvas
+    logcanvasHits->SetLogy(); // Set the y-axis to log scale
+    logcanvasHits->SetGrid(); // Enable grid
 
     // Set the font size for the entire canvas
     gStyle->SetTitleSize(0.05, "xyz"); // Set title size for x, y, and z axes
     gStyle->SetLabelSize(0.05, "xyz"); // Set label size for x, y, and z axes
     gStyle->SetOptStat(0); // Hide statistics boxes for the overlaid histograms
+    gStyle->SetOptTitle(0);
 
     // Draw the overlaid histograms
     for (size_t i = 0; i < ids.size(); ++i) {
@@ -195,24 +214,129 @@ void histograms()
     }
 
     // Create a legend for the overlaid histograms
-    TLegend *legend = new TLegend(0.75, 0.7, 0.9, 0.9);
+    TLegend *legendHits = new TLegend(0.78, 0.7, 0.9, 0.9);
     for (size_t i = 0; i < ids.size(); ++i) {
-        legend->AddEntry(histogramsHits[ids[i]], Form("Detector %s", idToName[ids[i]].c_str()), "l");
+        legendHits->AddEntry(histogramsHits[ids[i]], Form("Detector %s", idToName[ids[i]].c_str()), "l");
         float sizelabel = 0.03;
-        legend->SetTextSize(sizelabel);
+        legendHits->SetTextSize(sizelabel);
     }
-    legend->Draw();
+    legendHits->Draw();
 
-    logCanvas->SaveAs("Figures/logscale_histograms_all_detectors.png"); // Save the log-scale canvas as an image file
+    logcanvasHits->SaveAs("Figures/logscale_histograms_all_detectors.png"); // Save the log-scale canvas as an image file
+
+    gStyle->SetOptStat(1111); // Hide statistics boxes for the overlaid histograms
+    gStyle->SetOptTitle(1);
+
+
+    /********************/
+    /** Maximum Charge **/
+    /********************/
+
+    // Create a canvas for individual total charge histograms
+    TCanvas *canvasQ = new TCanvas("canvasQ", "Histograms of Maximum Charge for Different Detectors", 1200, 1200);
+    canvasQ->Divide(2, 3); // Divide the canvas into a 2x3 grid
+
+    // Grid for both axes
+    canvasQ->SetGridx();
+    canvasQ->SetGridy();
+
+    // Draw each total charge histogram on the canvas
+    for (size_t i = 0; i < ids.size(); ++i) {
+        int id = ids[i];
+        string name = idToName[id];
+        
+        canvasQ->cd(i + 1); // Move to the next pad
+        histogramsQ[id]->SetLineColor(colors[i]); // Set the color of the histogram
+
+        // Set the font size for the axes titles and labels
+        float sizelabel = 0.035;
+        histogramsQ[id]->GetXaxis()->SetTitleSize(sizelabel);
+        histogramsQ[id]->GetXaxis()->SetLabelSize(sizelabel);
+        histogramsQ[id]->GetYaxis()->SetTitleSize(sizelabel);
+        histogramsQ[id]->GetYaxis()->SetLabelSize(sizelabel);
+
+        histogramsQ[id]->Draw(); // Draw the histogram
+        gPad->SetGrid(); // Add grid to the current pad
+        histogramsQ[id]->GetXaxis()->SetRangeUser(0, 2000); // Set x-axis range
+
+        // Move the statistics box
+        gPad->Update(); // Update the pad to ensure the stats box is created
+        TPaveStats *statsQ = (TPaveStats*)histogramsQ[id]->FindObject("stats");
+        if (statsQ) {
+            statsQ->SetX1NDC(0.7); // New X1 position
+            statsQ->SetX2NDC(0.9); // New X2 position
+            statsQ->SetY1NDC(0.7); // New Y1 position
+            statsQ->SetY2NDC(0.9); // New Y2 position
+            statsQ->Draw(); // Draw the stats box on the pad
+        }
+        gPad->Update();
+    }
+
+    canvasQ->SetGrid(); // Enable grid
+    canvasQ->SaveAs("Figures/histograms_maximum_charge.png"); // Save the canvas as an image file
+
+    
+
+
+    /******************/
+    /** Total Charge **/
+    /******************/
+
+    
+    // Create a canvas for individual total charge histograms
+    TCanvas *canvasTQ = new TCanvas("canvasTQ", "Histograms of Total Charge for Different Detectors", 1200, 1200);
+    canvasTQ->Divide(2, 3); // Divide the canvas into a 2x3 grid
+
+    // Grid for both axes
+    canvasTQ->SetGridx();
+    canvasTQ->SetGridy();
+
+    // Draw each total charge histogram on the canvas
+    for (size_t i = 0; i < ids.size(); ++i) {
+        int id = ids[i];
+        string name = idToName[id];
+        
+        canvasTQ->cd(i + 1); // Move to the next pad
+        histogramsTQ[id]->SetLineColor(colors[i]); // Set the color of the histogram
+
+        // Set the font size for the axes titles and labels
+        float sizelabel = 0.035;
+        histogramsTQ[id]->GetXaxis()->SetTitleSize(sizelabel);
+        histogramsTQ[id]->GetXaxis()->SetLabelSize(sizelabel);
+        histogramsTQ[id]->GetYaxis()->SetTitleSize(sizelabel);
+        histogramsTQ[id]->GetYaxis()->SetLabelSize(sizelabel);
+
+        histogramsTQ[id]->Draw(); // Draw the histogram
+        gPad->SetGrid(); // Add grid to the current pad
+        histogramsTQ[id]->GetXaxis()->SetRangeUser(0, 2000); // Set x-axis range
+
+        // Move the statistics box
+        gPad->Update(); // Update the pad to ensure the stats box is created
+        TPaveStats *statsTQ = (TPaveStats*)histogramsTQ[id]->FindObject("stats");
+        if (statsTQ) {
+            cout<<"yessssssssssssssssssss"<< endl;
+            statsTQ->SetX1NDC(0.7); // New X1 position
+            statsTQ->SetX2NDC(0.9); // New X2 position
+            statsTQ->SetY1NDC(0.7); // New Y1 position
+            statsTQ->SetY2NDC(0.9); // New Y2 position
+            statsTQ->Draw(); // Draw the stats box on the pad
+        }
+        gPad->Update();
+    }
+
+    canvasTQ->SetGrid(); // Enable grid
+    canvasTQ->SaveAs("Figures/histograms_total_charge.png"); // Save the canvas as an image file
+
 
 
 
     // Clean up
     file->Close();
     delete file;
-    delete canvas;
-    delete logCanvas;
-    delete legend;
+    delete canvasHits;
+    delete logcanvasHits;
+    delete canvasTQ;
+    delete legendHits;
     // for (auto& hist : histogramsHits) delete hist.second;
     // for (auto& hist : histogramsQ) delete hist.second;
     // for (auto& hist : histogramsTQ) delete hist.second;

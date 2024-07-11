@@ -54,50 +54,16 @@ unordered_map<int, pair<double, double>> computeEfficiency(const string& filenam
     return efficiencies;
 }
 
-// // Main function to process multiple runs
-// int efficiency() {
-//     vector<string> files = {"Data/run6578.root", "Data/run6583.root", "Data/run6586.root", "Data/run6592.root", "Data/run6596.root", "Data/run6599.root"};
-//     vector<int> hvs = {500, 520, 520, 540, 560, 580}; // HV for detectors 8-12, detector 13 always at 600
-    
-//     // Store efficiency data
-//     unordered_map<int, vector<pair<double, double>>> data; // ID -> List of (efficiency, error)
-//     vector<double> hv_levels = {500, 520, 520, 540, 560, 580};  // HV levels without 600 since it's constant for ID 13
-
-//     for (size_t i = 0; i < files.size(); ++i) {
-//         auto eff = computeEfficiency(files[i]);
-//         for (int id : {8,9,10,11,12}) {
-//             data[id].push_back(eff[id]);
-//         }
-//         // Handle detector 13 separately if needed
-//     }
-
-//     // Create graphs for each detector
-//     for (int id : {8,9,10,11,12}) {
-//         vector<double> effs, errs;.
-//         for (auto& e : data[id]) {
-//             effs.push_back(e.first);
-//             errs.push_back(e.second);
-//         }
-
-//         TGraphErrors *graph = new TGraphErrors(hv_levels.size(), hv_levels.data(), effs.data(), nullptr, errs.data());
-//         graph->SetTitle(Form("Efficiency vs HV for Detector %d;HV;Efficiency (%)", id));
-//         TCanvas *c = new TCanvas(Form("c%d", id), Form("Canvas for Detector %d", id), 600, 400);
-//         graph->Draw("AP");
-//         c->SaveAs(Form("Efficiency_HV_Detector%d.png", id));
-//     }
-
-//     return 0;
-// }
 
 
 // Main function to process multiple runs
 int efficiency() {
-    vector<string> files = {"Data/run6578.root", "Data/run6583.root", "Data/run6586.root", "Data/run6592.root", "Data/run6596.root", "Data/run6599.root"};
-    vector<int> hvs = {500, 520, 520, 540, 560, 580}; // HV for detectors 8-12, detector 13 always at 600
+    vector<string> files = {"Data/run6578.root","Data/run6583.root","Data/run6586.root","Data/run6592.root","Data/run6596.root","Data/run6599.root","Data/run6602.root","Data/run6610.root","Data/run6612.root","Data/run6614.root","Data/run6616.root"};
+    vector<int> hvs = {500, 520, 520, 540, 560, 580, 600, 480, 460, 440, 420}; // HV for detectors 8-12, detector 13 always at 600
     
     map<int, string> idToName = {{8, "2"}, {9, "3"}, {10, "4"}, {11, "5"}, {12, "6"}, {13, "7"}};
     unordered_map<int, vector<pair<double, double>>> data; // ID -> List of (efficiency, error)
-    vector<double> hv_levels = {500, 520, 520, 540, 560, 580};  // HV levels without 600 since it's constant for ID 13
+    vector<double> hv_levels = {500, 520, 520, 540, 560, 580, 600, 480, 460, 440, 420};  // HV levels without 600 since it's constant for ID 13
 
     for (size_t i = 0; i < files.size(); ++i) {
         auto eff = computeEfficiency(files[i]);
