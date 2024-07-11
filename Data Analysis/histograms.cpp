@@ -58,7 +58,7 @@ void histograms()
                                    200, 0, 2000);
 
         histogramsTQ[id] = new TH1F(Form("hSumMaxCharge_%s", name.c_str()), 
-                                    Form("Sum of Maximum Charges for Detector %s;Charge;Number of Events", name.c_str()), 
+                                    Form("Total Charge for Detector %s;Charge;Number of Events", name.c_str()), 
                                     200, 0, 4000);
     }
 
@@ -135,12 +135,15 @@ void histograms()
     canvasHits->SetGridy();
 
     // Define colors for each histogram
-    vector<int> colors = {kRed, kBlue, kGreen, kMagenta, kCyan, kOrange};
+    vector<int> colors = {kRed, kBlue, kGreen+2, kMagenta+2, kCyan+2, kOrange-3};
 
     // Draw each histogram on the canvas
     for (size_t i = 0; i < ids.size(); ++i) {
         int id = ids[i];
         string name = idToName[id];
+
+        // double mean = histogramsHits[id]->GetMean();
+        // cout << "ID: " << id << "\t" << mean << endl;
         
         canvasHits->cd(i + 1); // Move to the next pad
         histogramsHits[id]->SetLineColor(colors[i]); // Set the color of the histogram
@@ -314,7 +317,6 @@ void histograms()
         gPad->Update(); // Update the pad to ensure the stats box is created
         TPaveStats *statsTQ = (TPaveStats*)histogramsTQ[id]->FindObject("stats");
         if (statsTQ) {
-            cout<<"yessssssssssssssssssss"<< endl;
             statsTQ->SetX1NDC(0.7); // New X1 position
             statsTQ->SetX2NDC(0.9); // New X2 position
             statsTQ->SetY1NDC(0.7); // New Y1 position
