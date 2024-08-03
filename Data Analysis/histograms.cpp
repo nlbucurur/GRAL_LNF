@@ -78,8 +78,7 @@ void histograms()
         for (int id : ids) {
             hitsCount[id] = count(apv_id.begin(), apv_id.end(), id);
             // histogramsHits[id]->Fill(hitsCount[id]);
-            if (hitsCount[id] != 0)
-            {
+            if (hitsCount[id] != 0 && hitsCount[id] <= 10){
                 histogramsHits[id]->Fill(hitsCount[id]);
             }  
         }
@@ -158,6 +157,7 @@ void histograms()
         histogramsHits[id]->Draw(); // Draw the histogram
         gPad->SetGrid(); // Add grid to the current pad
         histogramsHits[id]->GetXaxis()->SetRangeUser(1, 10); // Set x-axis range
+        
 
         // Move the statistics box
         gPad->Update(); // Update the pad to ensure the stats box is created
@@ -169,6 +169,8 @@ void histograms()
             statsHits->SetY2NDC(0.9); // New Y2 position
             statsHits->Draw(); // Draw the stats box on the pad
         }
+
+        histogramsHits[id]->ResetStats();
         
     }
 
@@ -225,7 +227,7 @@ void histograms()
     }
     legendHits->Draw();
 
-    logcanvasHits->SaveAs("Figures/logscale_histograms_all_detectors.png"); // Save the log-scale canvas as an image file
+    // logcanvasHits->SaveAs("Figures/logscale_histograms_all_detectors.png"); // Save the log-scale canvas as an image file
 
     gStyle->SetOptStat(1111); // Hide statistics boxes for the overlaid histograms
     gStyle->SetOptTitle(1);
@@ -337,6 +339,7 @@ void histograms()
     delete file;
     delete canvasHits;
     delete logcanvasHits;
+    delete canvasQ;
     delete canvasTQ;
     delete legendHits;
     // for (auto& hist : histogramsHits) delete hist.second;
